@@ -22,4 +22,4 @@ default['autoit']['filename'] = 'autoit-v3-setup'
 default['autoit']['filenameextension'] = 'exe'
 default['autoit']['url'] = 'https://www.autoitscript.com/files/autoit3/' + default['autoit']['filename'] + '.' + default['autoit']['filenameextension'] 
 default['autoit']['checksum'] = '64ef202b89edd2b3d10f3b631edb57026e4d240786463a1825599eb9c61fdf72'
-
+default['autoit']['home'] = 'C:\Program Files (x86)\AutoIt3'
