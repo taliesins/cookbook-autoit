@@ -2,10 +2,12 @@
 # Cookbook Name:: autoit
 # Recipe:: default
 #
-# Copyright (C) 2015 YOUR_NAME
+# Copyright (C) 2015 Taliesin Sisson
 #
 # All rights reserved - Do Not Redistribute
 #
+
+include_recipe 'pstools'
 
 windows_package node['autoit']['name'] do
 	checksum node['autoit']['checksum']
