@@ -8,6 +8,7 @@
 #
 
 include_recipe 'pstools'
+include_recipe 'rdpplus'
 
 windows_package node['autoit']['name'] do
 	checksum node['autoit']['checksum']

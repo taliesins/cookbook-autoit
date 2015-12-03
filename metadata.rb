@@ -8,3 +8,4 @@ long_description 'Installs/Configures autoit'
 version          '0.1.0'
 
 depends 'pstools'
+depends 'rdpplus'
