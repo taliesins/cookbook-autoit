@@ -16,3 +16,7 @@ windows_package node['autoit']['name'] do
 	installer_type :custom
 	options "/S"
 end
+
+template "#{node['autoit']['home']}/Invoke-InDesktopSession.ps1" do
+  source 'Invoke-InDesktopSession.ps1.erb'
+end
