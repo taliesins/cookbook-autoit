@@ -61,13 +61,14 @@ Function Invoke-InDesktopSession {
         $username = $username.split('@')[0]
     }
 
-    $computer = @("localhost")              
+    $computer = [System.Net.Dns]::GetHostByName($env:Computer).HostName
     $existingSessionForUser = Get-ComputerSessions -computer $computer | ?{$_.Username -eq $username}
 
     if ($existingSessionForUser) {
         $sessionIdForUser = $existingSessionForUser.Id
     } else {
-        &"$rdpplusPath" /v:$computer /u:$username /p:$password
+		echo "$rdpplusPath" /v:$computer /u:$username /p:$password /o:"authentication level:i:0"
+        &"$rdpplusPath" /v:$computer /u:$username /p:$password /o:"authentication level:i:0"
         $sessionIdForUser = $null
         while (!$sessionIdForUser) {
             sleep 1
