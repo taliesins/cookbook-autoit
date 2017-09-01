@@ -1,4 +1,26 @@
 $ErrorActionPreference = "Stop"    
+Function Stop-ComputerSession {
+    Param(
+        [Parameter(Mandatory = $False, Position = 0, ValueFromPipeline = $True)]
+        [string[]]$Computer,
+        [Parameter(Mandatory = $False, Position = 1, ValueFromPipeline = $True)]
+        [string]$SessionId      
+    )    
+
+    if ($Computer){
+    }else{
+        $Computer = 'localhost'
+    }
+
+    $exitCode = $global:LASTEXITCODE
+
+    ForEach($c in $Computer) {
+        $result = &reset session $SessionId /server:$c
+    }
+
+    $global:LASTEXITCODE = $exitCode
+}
+
 Function Get-ComputerSessions {
 [cmdletbinding(
     DefaultParameterSetName = 'session',
@@ -9,33 +31,37 @@ Function Get-ComputerSessions {
             Mandatory = $False,
             Position = 0,
             ValueFromPipeline = $True)]
-            [string[]]$computer
+            [string[]]$Computer
             )
 Begin {
     $report = @()
     }
 Process {
-    if ($computer){
+    if ($Computer){
     }else{
-        $computer = @("localhost")
+        $Computer = @('localhost')
     }
 
-    ForEach($c in $computer) {
+    $exitCode = $global:LASTEXITCODE
+
+    ForEach($c in $Computer) {
         # Parse 'query session' and store in $sessions:
-        $sessions = query session /server:$c
-            1..($sessions.count -1) | % {
-                $temp = "" | Select Computer,SessionName, Username, Id, State, Type, Device
-                $temp.Computer = $c
-                $temp.SessionName = $sessions[$_].Substring(1,18).Trim()
-                $temp.Username = $sessions[$_].Substring(19,20).Trim()
-                $temp.Id = $sessions[$_].Substring(39,9).Trim()
-                $temp.State = $sessions[$_].Substring(48,8).Trim()
-                $temp.Type = $sessions[$_].Substring(56,12).Trim()
-                $temp.Device = $sessions[$_].Substring(68).Trim()
-                $report += $temp
-            }
+        $sessions = &query session /server:$c
+        1..($sessions.count -1) | % {
+            $temp = "" | Select Computer,SessionName, Username, Id, State, Type, Device
+            $temp.Computer = $c
+            $temp.SessionName = $sessions[$_].Substring(1,18).Trim()
+            $temp.Username = $sessions[$_].Substring(19,20).Trim()
+            $temp.Id = $sessions[$_].Substring(39,9).Trim()
+            $temp.State = $sessions[$_].Substring(48,8).Trim()
+            $temp.Type = $sessions[$_].Substring(56,12).Trim()
+            $temp.Device = $sessions[$_].Substring(68).Trim()
+            $report += $temp
         }
     }
+
+    $global:LASTEXITCODE = $exitCode
+}
 End {
     $report
     }
@@ -77,11 +103,12 @@ Function Invoke-InDesktopSession {
     }
 
     $process = Start-Process -FilePath $psexecPath -ArgumentList "-accepteula -i $sessionIdForUser $command" -NoNewWindow -PassThru -Wait
-    $process.ExitCode
+    $process.WaitForExit()
 
     if ($existingSessionForUser) {
     } else {
-        $process = Start-Process -FilePath $psexecPath -ArgumentList "-accepteula -i $sessionIdForUser shutdown -l" -NoNewWindow -PassThru -Wait
-        $process.ExitCode
+        Stop-ComputerSession -Computer $computer -SessionId $sessionIdForUser
     }
+    
+    exit $process.ExitCode
 }
