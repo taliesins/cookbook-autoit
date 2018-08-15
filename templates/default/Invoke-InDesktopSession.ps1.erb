@@ -83,7 +83,7 @@ function Invoke-Process
         [string]$WorkingDirectory = ".",
 
         [Parameter(Mandatory = $false, Position = 3)]
-        [TimeSpan]$Timeout = [System.TimeSpan]::FromMinutes(2),
+        [Nullable[TimeSpan]]$Timeout = [System.TimeSpan]::FromMinutes(2),
 
         [Parameter(Mandatory = $false, Position = 4)]
         [System.Diagnostics.ProcessPriorityClass]$Priority = [System.Diagnostics.ProcessPriorityClass]::Normal
@@ -120,7 +120,7 @@ function Invoke-Process
             # wait for complete
             "Waiting for command complete. It will Timeout in {0}ms" -f $Timeout.TotalMilliseconds | VerboseOutput
             $isTimeout = $false
-            if (-not $Process.WaitForExit($Timeout.TotalMilliseconds))
+            if (($Timeout -ne $null) -and (-not $Process.WaitForExit($Timeout.TotalMilliseconds)))
             {
                 $isTimeout = $true
                 "Timeout detected for {0}ms. Kill process immediately" -f $Timeout.TotalMilliseconds | VerboseOutput
@@ -229,7 +229,8 @@ Function Invoke-InDesktopSession {
             [string]$password,
             [string]$command,
             [string]$psexecPath,
-            [string]$rdpplusPath
+            [string]$rdpplusPath,
+            [Nullable[double]]$timeOutMinutes = 20
             )
     
     $domain = ""
@@ -261,7 +262,7 @@ Function Invoke-InDesktopSession {
 	try{
 		$fileName = $psexecPath
 		$arguments = "-accepteula -i $sessionIdForUser $command"
-		$timeOut = [System.TimeSpan]::FromMinutes(20)
+		$timeOut = $(if ($timeOutMinutes -ne $null) { ([System.TimeSpan]::FromMinutes($timeOutMinutes)) } else { $null })
 	
 		Invoke-Process -FileName $fileName -Arguments $arguments -Timeout $timeOut
 	} finally{
