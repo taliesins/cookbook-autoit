@@ -248,8 +248,10 @@ Function Invoke-InDesktopSession {
     $existingSessionForUser = Get-ComputerSessions -computer $computer | ?{$_.Username -eq $username}
 
     if ($existingSessionForUser) {
+        Write-Verbose "Found existing session for the user - Session Id $($existingSessionForUser.Id)"
         $sessionIdForUser = $existingSessionForUser.Id
     } else {
+        Write-Verbose "Couldn't find and existing session for the user. Creating a new one with RDPPlus"
         Write-Verbose "`"$rdpplusPath`" /v:$computer /u:$username /p:$password /o:`"authentication level:i:0`""
         &"$rdpplusPath" /v:$computer /u:$username /p:$password /o:"authentication level:i:0"
         $sessionIdForUser = $null
@@ -257,6 +259,7 @@ Function Invoke-InDesktopSession {
             sleep 1
             $sessionIdForUser = Get-ComputerSessions -computer $computer | ?{$_.Username -eq $username} | %{$_.Id} 
         }
+        Write-Verbose "Session created. Id: $sessionIdForUser"
     }
 
 	try{
