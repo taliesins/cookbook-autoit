@@ -264,7 +264,7 @@ Function Invoke-InDesktopSession {
 		$arguments = "-accepteula -i $sessionIdForUser $command"
 		$timeOut = $(if ($timeOutMinutes -ne $null) { ([System.TimeSpan]::FromMinutes($timeOutMinutes)) } else { $null })
 	
-		Invoke-Process -FileName $fileName -Arguments $arguments -Timeout $timeOut
+		return Invoke-Process -FileName $fileName -Arguments $arguments -Timeout $timeOut
 	} finally{
 		if ($existingSessionForUser) {
 		} else {
