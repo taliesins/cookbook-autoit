@@ -250,7 +250,7 @@ Function Invoke-InDesktopSession {
     if ($existingSessionForUser) {
         $sessionIdForUser = $existingSessionForUser.Id
     } else {
-		echo "$rdpplusPath" /v:$computer /u:$username /p:$password /o:"authentication level:i:0"
+        Write-Verbose "`"$rdpplusPath`" /v:$computer /u:$username /p:$password /o:`"authentication level:i:0`""
         &"$rdpplusPath" /v:$computer /u:$username /p:$password /o:"authentication level:i:0"
         $sessionIdForUser = $null
         while (!$sessionIdForUser) {
