@@ -267,7 +267,7 @@ Function Invoke-InDesktopSession {
 		$fileName = $psexecPath
 		$outputLogPath = "$workingDirectory\DesktopSession_out_$([System.Guid]::NewGuid().ToString()).txt"
 		Write-Verbose "Command output will be captured, but also saved in $outputLogPath (if relative, then resolved against $workingDirectory )"
-		$arguments = "-accepteula -i $sessionIdForUser -w `"$workingDirectory`" cmd /c `"$command 2>&1 > $outputLogPath`""
+		$arguments = "-accepteula -i $sessionIdForUser -w `"$workingDirectory`" -u `"$username`" -p `"$password`" cmd /c `"$command 2>&1 > $outputLogPath`""
 		$timeOut = $(if ($timeOutMinutes -ne $null) { ([System.TimeSpan]::FromMinutes($timeOutMinutes)) } else { $null })
 	
 		$result = Invoke-Process -WorkingDirectory $workingDirectory -FileName $fileName -Arguments $arguments -Timeout $timeOut
