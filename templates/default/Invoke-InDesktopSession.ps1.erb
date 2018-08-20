@@ -227,6 +227,7 @@ Function Invoke-InDesktopSession {
     Param(        
             [string]$username,
             [string]$password,
+            [string]$workingDirectory = ".",
             [string]$command,
             [string]$psexecPath,
             [string]$rdpplusPath,
@@ -264,10 +265,10 @@ Function Invoke-InDesktopSession {
 
 	try{
 		$fileName = $psexecPath
-		$arguments = "-accepteula -i $sessionIdForUser $command"
+		$arguments = "-accepteula -i $sessionIdForUser -w `"$workingDirectory`" $command"
 		$timeOut = $(if ($timeOutMinutes -ne $null) { ([System.TimeSpan]::FromMinutes($timeOutMinutes)) } else { $null })
 	
-		return Invoke-Process -FileName $fileName -Arguments $arguments -Timeout $timeOut
+		return Invoke-Process -WorkingDirectory $workingDirectory -FileName $fileName -Arguments $arguments -Timeout $timeOut
 	} finally{
 		if ($existingSessionForUser) {
 		} else {
