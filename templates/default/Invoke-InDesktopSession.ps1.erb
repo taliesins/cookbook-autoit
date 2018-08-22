@@ -118,7 +118,7 @@ function Invoke-Process
             $process.BeginErrorReadLine()
             
             # wait for complete
-            "Waiting for command complete. It will Timeout in {0}ms" -f $Timeout.TotalMilliseconds | VerboseOutput
+            "Waiting for command complete. It will Timeout in {0} minutes" -f $Timeout.TotalMinutes | VerboseOutput
             $isTimeout = $false
             if (($Timeout -ne $null) -and (-not $Process.WaitForExit($Timeout.TotalMilliseconds)))
             {
