@@ -83,7 +83,7 @@ function Invoke-Process
         [string]$WorkingDirectory = ".",
 
         [Parameter(Mandatory = $false, Position = 3)]
-        [TimeSpan]$Timeout = [System.TimeSpan]::FromMinutes(2),
+        [Nullable[TimeSpan]]$Timeout = [System.TimeSpan]::FromMinutes(2),
 
         [Parameter(Mandatory = $false, Position = 4)]
         [System.Diagnostics.ProcessPriorityClass]$Priority = [System.Diagnostics.ProcessPriorityClass]::Normal
@@ -118,9 +118,9 @@ function Invoke-Process
             $process.BeginErrorReadLine()
             
             # wait for complete
-            "Waiting for command complete. It will Timeout in {0}ms" -f $Timeout.TotalMilliseconds | VerboseOutput
+            "Waiting for command complete. It will Timeout in {0} minutes" -f $Timeout.TotalMinutes | VerboseOutput
             $isTimeout = $false
-            if (-not $Process.WaitForExit($Timeout.TotalMilliseconds))
+            if (($Timeout -ne $null) -and (-not $Process.WaitForExit($Timeout.TotalMilliseconds)))
             {
                 $isTimeout = $true
                 "Timeout detected for {0}ms. Kill process immediately" -f $Timeout.TotalMilliseconds | VerboseOutput
@@ -227,9 +227,11 @@ Function Invoke-InDesktopSession {
     Param(        
             [string]$username,
             [string]$password,
+            [string]$workingDirectory = ".",
             [string]$command,
             [string]$psexecPath,
-            [string]$rdpplusPath
+            [string]$rdpplusPath,
+            [Nullable[double]]$timeOutMinutes = 20
             )
     
     $domain = ""
@@ -247,23 +249,30 @@ Function Invoke-InDesktopSession {
     $existingSessionForUser = Get-ComputerSessions -computer $computer | ?{$_.Username -eq $username}
 
     if ($existingSessionForUser) {
+        Write-Verbose "Found existing session for the user - Session Id $($existingSessionForUser.Id)"
         $sessionIdForUser = $existingSessionForUser.Id
     } else {
-		echo "$rdpplusPath" /v:$computer /u:$username /p:$password /o:"authentication level:i:0"
+        Write-Verbose "Couldn't find and existing session for the user. Creating a new one with RDPPlus"
+        Write-Verbose "`"$rdpplusPath`" /v:$computer /u:$username /p:$password /o:`"authentication level:i:0`""
         &"$rdpplusPath" /v:$computer /u:$username /p:$password /o:"authentication level:i:0"
         $sessionIdForUser = $null
         while (!$sessionIdForUser) {
             sleep 1
             $sessionIdForUser = Get-ComputerSessions -computer $computer | ?{$_.Username -eq $username} | %{$_.Id} 
         }
+        Write-Verbose "Session created. Id: $sessionIdForUser"
     }
 
 	try{
 		$fileName = $psexecPath
-		$arguments = "-accepteula -i $sessionIdForUser $command"
-		$timeOut = [System.TimeSpan]::FromMinutes(20)
+		$outputLogPath = "$workingDirectory\DesktopSession_out_$([System.Guid]::NewGuid().ToString()).txt"
+		Write-Verbose "Command output will be captured, but also saved in $outputLogPath (if relative, then resolved against $workingDirectory )"
+		$arguments = "-accepteula -i $sessionIdForUser -w `"$workingDirectory`" -u `"$username`" -p `"$password`" cmd /c `"$command 2>&1 > $outputLogPath`""
+		$timeOut = $(if ($timeOutMinutes -ne $null) { ([System.TimeSpan]::FromMinutes($timeOutMinutes)) } else { $null })
 	
-		Invoke-Process -FileName $fileName -Arguments $arguments -Timeout $timeOut
+		$result = Invoke-Process -WorkingDirectory $workingDirectory -FileName $fileName -Arguments $arguments -Timeout $timeOut
+		$result.StandardOutput = "$($result.StandardOutput)`r`n$(Get-Content -Raw $outputLogPath)"
+		return $result
 	} finally{
 		if ($existingSessionForUser) {
 		} else {
